@@ -31,7 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
+
+import java.util.Date;
 
 import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videoplayer.util.PlayerUtils;
@@ -55,11 +58,16 @@ public class VodController extends BaseController {
                     }
                     case 1002: { // 显示底部菜单
                         mBottomRoot.setVisibility(VISIBLE);
+                        mTopRoot1.setVisibility(VISIBLE);
+                        mTopRoot2.setVisibility(VISIBLE);
+                        mPlayTitle.setVisibility(GONE);
                         mBottomRoot.requestFocus();
                         break;
                     }
                     case 1003: { // 隐藏底部菜单
                         mBottomRoot.setVisibility(GONE);
+                        mTopRoot1.setVisibility(GONE);
+                        mTopRoot2.setVisibility(GONE);
                         break;
                     }
                     case 1004: { // 设置速度
@@ -87,9 +95,12 @@ public class VodController extends BaseController {
     TextView mProgressText;
     ImageView mProgressIcon;
     LinearLayout mBottomRoot;
+    LinearLayout mTopRoot1;
+    LinearLayout mTopRoot2;
     LinearLayout mParseRoot;
     TvRecyclerView mGridView;
     TextView mPlayTitle;
+    TextView mPlayTitle1;
     TextView mNextBtn;
     TextView mPreBtn;
     TextView mPlayerScaleBtn;
@@ -101,10 +112,34 @@ public class VodController extends BaseController {
     TextView mPlayerTimeStartBtn;
     TextView mPlayerTimeSkipBtn;
     TextView mPlayerTimeStepBtn;
+    TextView mPlayPauseTime;
+    TextView mPlayLoadNetSpeed;
+    TextView mVideoSize;
 
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 6000;//闲置多少毫秒秒关闭底栏  默认6秒
+
+    private Runnable myRunnable2 = new Runnable() {
+        @Override
+        public void run() {
+            Date date = new Date();
+            SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            mPlayPauseTime.setText(timeFormat.format(date));
+
+            mPlayLoadNetSpeed.setText(PlayerHelper.getDisplaySpeed(mControlWrapper.getTcpSpeed()));
+
+            String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
+            String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
+            mVideoSize.setText("[ " + width + " X " + height +" ]");
+
+            mHandler.postDelayed(this, 1000);
+        }
+    };
+
+
+
+
 
     @Override
     protected void initView() {
@@ -112,11 +147,14 @@ public class VodController extends BaseController {
         mCurrentTime = findViewById(R.id.curr_time);
         mTotalTime = findViewById(R.id.total_time);
         mPlayTitle = findViewById(R.id.tv_info_name);
+        mPlayTitle1 = findViewById(R.id.tv_info_name1);
         mSeekBar = findViewById(R.id.seekBar);
         mProgressRoot = findViewById(R.id.tv_progress_container);
         mProgressIcon = findViewById(R.id.tv_progress_icon);
         mProgressText = findViewById(R.id.tv_progress_text);
         mBottomRoot = findViewById(R.id.bottom_container);
+        mTopRoot1 = findViewById(R.id.tv_top_l_container);
+        mTopRoot2 = findViewById(R.id.tv_top_r_container);
         mParseRoot = findViewById(R.id.parse_root);
         mGridView = findViewById(R.id.mGridView);
         mPlayerRetry = findViewById(R.id.play_retry);
@@ -130,6 +168,9 @@ public class VodController extends BaseController {
         mPlayerTimeStartBtn = findViewById(R.id.play_time_start);
         mPlayerTimeSkipBtn = findViewById(R.id.play_time_end);
         mPlayerTimeStepBtn = findViewById(R.id.play_time_step);
+        mPlayPauseTime = findViewById(R.id.tv_sys_time);
+        mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
+        mVideoSize = findViewById(R.id.tv_videosize);
 
         myHandle=new Handler();
         myRunnable = new Runnable() {
@@ -138,6 +179,13 @@ public class VodController extends BaseController {
                 hideBottom();
             }
         };
+
+        mPlayPauseTime.post(new Runnable() {
+            @Override
+            public void run() {
+                mHandler.post(myRunnable2);
+            }
+        });
 
         mGridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
         ParseAdapter parseAdapter = new ParseAdapter();
@@ -297,10 +345,11 @@ public class VodController extends BaseController {
                     updatePlayerCfgView();
                     listener.updatePlayerCfg();
                     listener.replay(false);
-                    hideBottom();
+//                    hideBottom();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                mPlayerBtn.requestFocus();
             }
         });
         mPlayerIJKBtn.setOnClickListener(new OnClickListener() {
@@ -325,10 +374,11 @@ public class VodController extends BaseController {
                     updatePlayerCfgView();
                     listener.updatePlayerCfg();
                     listener.replay(false);
-                    hideBottom();
+//                    hideBottom();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                mPlayerIJKBtn.requestFocus();
             }
         });
 //        增加播放页面片头片尾时间重置
@@ -471,6 +521,7 @@ public class VodController extends BaseController {
 
     public void setTitle(String playTitleInfo) {
         mPlayTitle.setText(playTitleInfo);
+        mPlayTitle1.setText(playTitleInfo);
     }
 
     public void resetSpeed() {
@@ -593,15 +644,20 @@ public class VodController extends BaseController {
                 startProgress();
                 break;
             case VideoView.STATE_PAUSED:
+                mTopRoot1.setVisibility(GONE);
+                mTopRoot2.setVisibility(GONE);
+                mPlayTitle.setVisibility(VISIBLE);
                 break;
             case VideoView.STATE_ERROR:
                 listener.errReplay();
                 break;
             case VideoView.STATE_PREPARED:
             case VideoView.STATE_BUFFERED:
+                mPlayLoadNetSpeed.setVisibility(GONE);
                 break;
             case VideoView.STATE_PREPARING:
             case VideoView.STATE_BUFFERING:
+                mPlayLoadNetSpeed.setVisibility(VISIBLE);
                 break;
             case VideoView.STATE_PLAYBACK_COMPLETED:
                 listener.playNext(true);
