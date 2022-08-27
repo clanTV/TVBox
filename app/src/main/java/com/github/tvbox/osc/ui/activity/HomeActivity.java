@@ -133,12 +133,24 @@ public class HomeActivity extends BaseActivity {
         this.mGridView.setOnItemListener(new TvRecyclerView.OnItemListener() {
             public void onItemPreSelected(TvRecyclerView tvRecyclerView, View view, int position) {
                 if (view != null && !HomeActivity.this.isDownOrUp) {
-                    view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(300).start();
-                    TextView textView = view.findViewById(R.id.tvTitle);
-                    textView.getPaint().setFakeBoldText(false);
-                    textView.setTextColor(HomeActivity.this.getResources().getColor(R.color.color_BBFFFFFF));
-                    textView.invalidate();
-                    view.findViewById(R.id.tvFilter).setVisibility(View.GONE);
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            TextView textView = view.findViewById(R.id.tvTitle);
+                            textView.getPaint().setFakeBoldText(false);
+                            if(sortFocused == p){
+                                view.animate().scaleX(1.1f).scaleY(1.1f).setInterpolator(new BounceInterpolator()).setDuration(300).start();
+                                textView.setTextColor(HomeActivity.this.getResources().getColor(R.color.color_FFFFFF));
+                            }else {
+                                view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(300).start();
+                                textView.setTextColor(HomeActivity.this.getResources().getColor(R.color.color_BBFFFFFF));
+                                view.findViewById(R.id.tvFilter).setVisibility(View.GONE);
+                            }
+                            textView.invalidate();
+                        }
+                        public View v = view;
+                        public int p = position;
+                    }, 10);
                 }
             }
 
@@ -390,6 +402,8 @@ public class HomeActivity extends BaseActivity {
         BaseLazyFragment baseLazyFragment = this.fragments.get(i);
         if (baseLazyFragment instanceof GridFragment) {
             View view = this.sortFocusView;
+            GridFragment grid = (GridFragment)baseLazyFragment;
+            if(grid.restoreView() ){ return; }// 还原上次保存的UI内容
             if (view != null && !view.isFocused()) {
                 this.sortFocusView.requestFocus();
             } else if (this.sortFocused != 0) {
@@ -404,6 +418,11 @@ public class HomeActivity extends BaseActivity {
 
     private void exit() {
         if (System.currentTimeMillis() - mExitTime < 2000) {
+            //这一段借鉴来自 q群老哥 IDCardWeb
+            EventBus.getDefault().unregister(this);
+            AppManager.getInstance().appExit(0);
+            ControlManager.get().stopServer();
+            finish();
             super.onBackPressed();
         } else {
             mExitTime = System.currentTimeMillis();
@@ -568,15 +587,24 @@ public class HomeActivity extends BaseActivity {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
                     if (homeSourceKey != null && !homeSourceKey.equals(Hawk.get(HawkConfig.HOME_API, ""))) {
-                        Intent intent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getApplication().getPackageName());
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//                        Intent intent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getApplication().getPackageName());
+//                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+//                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//                        Bundle bundle = new Bundle();
+//                        bundle.putBoolean("useCache", true);
+//                        intent.putExtras(bundle);
+//                        getApplicationContext().startActivity(intent);
+//                        System.exit(0);
+
+                        Intent intent =new Intent(getApplicationContext(), HomeActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         Bundle bundle = new Bundle();
                         bundle.putBoolean("useCache", true);
                         intent.putExtras(bundle);
-                        getApplicationContext().startActivity(intent);
-                        android.os.Process.killProcess(android.os.Process.myPid());
-                        System.exit(0);
+                        HomeActivity.this.startActivity(intent);
+//                        android.os.Process.killProcess(android.os.Process.myPid());
+//                        System.exit(0);
+
                     }
                 }
             });

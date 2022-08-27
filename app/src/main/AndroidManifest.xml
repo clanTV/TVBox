@@ -27,7 +27,7 @@
 
         <activity
             android:name=".ui.activity.HomeActivity"
-            android:screenOrientation="landscape">
+            android:screenOrientation="sensorLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -38,18 +38,21 @@
 
         <activity
             android:name=".ui.activity.LivePlayActivity"
-            android:screenOrientation="landscape" />
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.DetailActivity"
-            android:screenOrientation="landscape" />
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.PlayActivity"
-            android:screenOrientation="landscape" />
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.PushActivity"
             android:screenOrientation="landscape" />
         <activity
             android:name=".ui.activity.SearchActivity"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ui.activity.FastSearchActivity"
             android:screenOrientation="landscape" />
         <activity
             android:name=".ui.activity.SettingActivity"
