@@ -149,11 +149,7 @@ public class PlayActivity extends BaseActivity {
         ProgressManager progressManager = new ProgressManager() {
             @Override
             public void saveProgress(String url, long progress) {
-                if (videoDuration != -1) {
-                    if (videoDuration <= 6000) {
-                        return;
-                    }
-                }
+                if (videoDuration ==0) return;
                 CacheManager.save(MD5.string2MD5(url), progress);
             }
 
@@ -238,13 +234,20 @@ public class PlayActivity extends BaseActivity {
 
     void initVideoDurationSomeThing() {
         videoDuration = mVideoView.getMediaPlayer().getDuration();
-        if (videoDuration <= 6000) {
+        if (videoDuration ==0) {
             mController.mPlayerSpeedBtn.setVisibility(View.GONE);
             mController.mPlayerTimeStartEndText.setVisibility(View.GONE);
             mController.mPlayerTimeStartBtn.setVisibility(View.GONE);
             mController.mPlayerTimeSkipBtn.setVisibility(View.GONE);
             mController.mPlayerTimeStepBtn.setVisibility(View.GONE);
             mController.mPlayerTimeResetBtn.setVisibility(View.GONE);
+        }else {
+            mController.mPlayerSpeedBtn.setVisibility(View.VISIBLE);
+            mController.mPlayerTimeStartEndText.setVisibility(View.VISIBLE);
+            mController.mPlayerTimeStartBtn.setVisibility(View.VISIBLE);
+            mController.mPlayerTimeSkipBtn.setVisibility(View.VISIBLE);
+            mController.mPlayerTimeStepBtn.setVisibility(View.VISIBLE);
+            mController.mPlayerTimeResetBtn.setVisibility(View.VISIBLE);
         }
     }
 
@@ -1430,31 +1433,16 @@ public class PlayActivity extends BaseActivity {
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             String url = request.getUrl().toString();
             LOG.i("shouldInterceptRequest url:" + url);
-            //jpg等无效资源避免请求远程直接返回response
-            String uselessmMimeType = null;
-            if (url.contains(".jpg")) {
-                uselessmMimeType = "image/jpeg";
-            } else if (url.contains(".png")) {
-                uselessmMimeType = "image/png";
-            } else if (url.contains(".gif")) {
-                uselessmMimeType = "image/gif";
-            }
-            if (uselessmMimeType != null && !uselessmMimeType.isEmpty()) {
-                return new WebResourceResponse(uselessmMimeType, "UTF-8", null);
-            }
             HashMap<String, String> webHeaders = new HashMap<>();
-            try {
-                Map<String, String> hds = request.getRequestHeaders();
+            Map<String, String> hds = request.getRequestHeaders();
+            if (hds != null && hds.keySet().size() > 0) {
                 for (String k : hds.keySet()) {
                     if (k.equalsIgnoreCase("user-agent")
                             || k.equalsIgnoreCase("referer")
-                            || k.equalsIgnoreCase("accept")
                             || k.equalsIgnoreCase("origin")) {
                         webHeaders.put(k, hds.get(k));
                     }
                 }
-            } catch (Throwable th) {
-
             }
             WebResourceResponse response = checkIsVideo(url, webHeaders);
             return response;
@@ -1570,18 +1558,6 @@ public class PlayActivity extends BaseActivity {
                 }
                 return null;
             }
-            //jpg等无效资源避免请求远程直接返回response
-            String uselessmMimeType = null;
-            if (url.contains(".jpg")) {
-                uselessmMimeType = "image/jpeg";
-            } else if (url.contains(".png")) {
-                uselessmMimeType = "image/png";
-            } else if (url.contains(".gif")) {
-                uselessmMimeType = "image/gif";
-            }
-            if (uselessmMimeType != null && !uselessmMimeType.isEmpty()) {
-                return createXWalkWebResourceResponse(uselessmMimeType, "UTF-8", null);
-            }
             boolean ad;
             if (!loadedUrls.containsKey(url)) {
                 ad = AdBlocker.isAd(url);
@@ -1592,18 +1568,15 @@ public class PlayActivity extends BaseActivity {
             if (!ad ) {
                 if (checkVideoFormat(url)) {
                     HashMap<String, String> webHeaders = new HashMap<>();
-                    try {
-                        Map<String, String> hds = request.getRequestHeaders();
+                    Map<String, String> hds = request.getRequestHeaders();
+                    if (hds != null && hds.keySet().size() > 0) {
                         for (String k : hds.keySet()) {
                             if (k.equalsIgnoreCase("user-agent")
                                     || k.equalsIgnoreCase("referer")
-                                    || k.equalsIgnoreCase("accept")
                                     || k.equalsIgnoreCase("origin")) {
                                 webHeaders.put(k, hds.get(k));
                             }
                         }
-                    } catch (Throwable th) {
-
                     }
                     loadFoundVideoUrls.add(url);
                     loadFoundVideoUrlsHeader.put(url, webHeaders);
